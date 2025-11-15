@@ -55,7 +55,8 @@
             font-weight: 600;
         }
 
-        select, input[type="number"], input[type="text"] {
+        /* Input type=text untuk rupiah dan select */
+        select, input[type="text"] {
             width: 100%;
             padding: 12px;
             border: 1px solid #ced4da;
@@ -64,6 +65,16 @@
             font-size: 16px;
         }
         
+        /* Input number untuk bunga/persen/tenor */
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 16px;
+        }
+
         /* Tenor Buttons */
         .tenor-options {
             display: flex;
@@ -179,7 +190,9 @@
         <input type="text" id="display_otr" value="0" readonly>
         
         <label for="display_bunga">Bunga Flat Tahunan (%): <span id="bunga_display">11%</span></label>
-        <input type="number" id="input_bunga" value="11" min="0.1" readonly> <label>Pilih Tenor (Tahun):</label>
+        <input type="number" id="input_bunga" value="11" min="0.1" readonly>
+
+        <label>Pilih Tenor (Tahun):</label>
         <div class="tenor-options" id="tenor_options">
             <button onclick="setTenor(1)">1 Tahun (7%)</button>
             <button onclick="setTenor(2)">2 Tahun (8%)</button>
@@ -192,30 +205,30 @@
     <div class="card">
         <h2>Biaya Administrasi (Dibebankan ke Angsuran)</h2>
         <label for="biaya_provisi">Provisi (Rp):</label>
-        <input type="number" id="biaya_provisi" value="4300000" min="0" oninput="hitungSimulasi()">
+        <input type="text" id="biaya_provisi" value="4.300.000" oninput="formatInputRupiah(this)">
 
         <label for="biaya_admin">Biaya Admin (Rp):</label>
-        <input type="number" id="biaya_admin" value="2000000" min="0" oninput="hitungSimulasi()">
+        <input type="text" id="biaya_admin" value="2.000.000" oninput="formatInputRupiah(this)">
 
         <label for="biaya_asuransi">Biaya Asuransi (Rp):</label>
-        <input type="number" id="biaya_asuransi" value="3000000" min="0" oninput="hitungSimulasi()">
+        <input type="text" id="biaya_asuransi" value="3.000.000" oninput="formatInputRupiah(this)">
     </div>
 
     <div class="card" id="input-standard-card">
         <h2>Input DP & Diskon</h2>
         
         <label for="input_dp">DP Request Konsumen (Rp):</label>
-        <input type="number" id="input_dp" value="0" min="0" oninput="hitungSimulasi()">
+        <input type="text" id="input_dp" value="0" oninput="formatInputRupiah(this)">
 
         <label for="input_diskon">Diskon Dealer Manual (Rp):</label>
-        <input type="number" id="input_diskon" value="0" min="0" oninput="hitungSimulasi()">
+        <input type="text" id="input_diskon" value="0" oninput="formatInputRupiah(this)">
     </div>
 
     <div class="card hidden" id="input-reverse-card">
         <h2>Input Angsuran Request</h2>
         
         <label for="request_angsuran">Kesanggupan Angsuran Bulanan (Rp):</label>
-        <input type="number" id="request_angsuran" value="4000000" min="100000" oninput="hitungSimulasi()">
+        <input type="text" id="request_angsuran" value="4.000.000" oninput="formatInputRupiah(this)">
 
         <label for="reverse_dp_persen">Target DP Minimal (Persen OTR):</label>
         <input type="number" id="reverse_dp_persen" value="20" min="0" max="100" placeholder="Minimal DP 20%" oninput="hitungSimulasi()">
@@ -247,7 +260,7 @@
 
 <script>
     // ====================================
-    // 1. DATA MOBIL (MUDAH DI EDIT)
+    // 1. DATA MOBIL & TENOR
     // ====================================
     const DATA_MOBIL = [
         { id: 1, nama: "Suzuki XL7 Tipe Zeta", otr: 350000000 },
@@ -257,19 +270,31 @@
         { id: 5, nama: "Pilih Mobil Lain...", otr: 0 }, 
     ];
     
-    // 2. DATA BUNGA BERDASARKAN TENOR (BARU)
     const TENOR_CONFIG = {
-        1: 7,  // 1 Tahun, Bunga 7%
-        2: 8,  // 2 Tahun, Bunga 8%
-        3: 9,  // 3 Tahun, Bunga 9%
-        4: 10, // 4 Tahun, Bunga 10%
-        5: 11  // 5 Tahun, Bunga 11%
+        1: 7,
+        2: 8,
+        3: 9,
+        4: 10,
+        5: 11
     };
 
     // ====================================
-    // 3. FUNGSI UTILITY
+    // 2. FUNGSI UTILITY (MODIFIKASI)
     // ====================================
-    const formatRupiah = (angka) => {
+    /**
+     * Format angka menjadi string Rupiah dengan separator titik.
+     * Output: "1.000.000" (tanpa Rp)
+     */
+    const formatAngkaRupiah = (angka) => {
+        const num = Math.round(angka);
+        return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    };
+
+    /**
+     * Format angka menjadi string Rupiah dengan prefix "Rp " dan separator titik.
+     * Output: "Rp 1.000.000"
+     */
+    const formatRupiahDisplay = (angka) => {
         const num = Math.round(angka);
         return new Intl.NumberFormat('id-ID', {
             style: 'currency',
@@ -277,10 +302,36 @@
             minimumFractionDigits: 0
         }).format(num);
     };
+    
+    /**
+     * Membersihkan string input dari titik/koma dan mengembalikannya sebagai float.
+     */
+    const cleanRupiahValue = (rupiahString) => {
+        if (!rupiahString) return 0;
+        return parseFloat(rupiahString.replace(/\./g, ''));
+    };
 
     /**
-     * Hitung Angsuran Flat Rate Bulanan
+     * Fungsi yang dipanggil oleh event oninput untuk memformat angka saat diketik.
      */
+    function formatInputRupiah(inputElement) {
+        // Ambil nilai tanpa titik
+        let value = inputElement.value.replace(/\./g, '');
+        
+        // Cek jika nilainya angka valid
+        if (value && !isNaN(value)) {
+            // Format ulang dengan titik
+            inputElement.value = formatAngkaRupiah(value);
+        } else if (value.length > 0) {
+            // Jika ada karakter non-angka, hapus saja
+            inputElement.value = '';
+        }
+
+        // Jalankan hitung simulasi setelah formatting
+        hitungSimulasi();
+    }
+
+    // Hitung Angsuran Flat Rate Bulanan (SAMA)
     const hitungAngsuranFlat = (pokokPinjaman, tenorBulan, bungaTahunanPersen) => {
         if (tenorBulan <= 0) return 0;
         const bungaTahunan = bungaTahunanPersen / 100;
@@ -289,14 +340,11 @@
         return totalTagihan / tenorBulan;
     };
     
-    /**
-     * Hitung Pokok Pinjaman Maksimal dari Angsuran Request (Reverse)
-     */
+    // Hitung Pokok Pinjaman Maksimal dari Angsuran Request (SAMA)
     const hitungPokokPinjamanMaks = (angsuranRequest, tenorBulan, bungaTahunanPersen) => {
         const B = bungaTahunanPersen / 100;
         const T = tenorBulan;
         
-        // P = (A * T) / (1 + B * (T/12))
         let pokokPinjamanMaks = 0;
         if (angsuranRequest > 0 && T > 0) {
             pokokPinjamanMaks = (angsuranRequest * T) / (1 + (B * (T / 12)));
@@ -305,24 +353,30 @@
     }
 
     // ====================================
-    // 4. FUNGSI START & TENOR
+    // 3. FUNGSI START & TENOR
     // ====================================
     let currentTenorTahun = 5;
     let currentMode = 'standard';
 
     document.addEventListener('DOMContentLoaded', () => {
         populateMobilOptions();
+        // Format semua input saat dimuat (untuk nilai default)
+        document.querySelectorAll('input[type="text"]').forEach(input => {
+            if (input.id !== 'display_otr') { // Jangan format OTR display
+                 input.value = formatAngkaRupiah(cleanRupiahValue(input.value));
+            }
+        });
         setTenor(currentTenorTahun);
         changeMode(currentMode);
     });
 
     function populateMobilOptions() {
-        // ... (fungsi sama seperti sebelumnya) ...
         const select = document.getElementById('mobil_select');
         DATA_MOBIL.forEach(mobil => {
             const option = document.createElement('option');
             option.value = mobil.id;
-            option.textContent = `${mobil.nama} (OTR: ${formatRupiah(mobil.otr)})`;
+            // Opsi dropdown menggunakan format Rupiah tampilan standar (ada "Rp")
+            option.textContent = `${mobil.nama} (OTR: ${formatRupiahDisplay(mobil.otr)})`;
             select.appendChild(option);
         });
         select.value = DATA_MOBIL[0].id;
@@ -330,23 +384,19 @@
     }
 
     function updateOtrDisplay() {
-        // ... (fungsi sama seperti sebelumnya) ...
         const selectedId = parseInt(document.getElementById('mobil_select').value);
         const mobil = DATA_MOBIL.find(m => m.id === selectedId);
-        document.getElementById('display_otr').value = formatRupiah(mobil ? mobil.otr : 0);
+        // OTR display menggunakan format Rupiah tampilan standar (ada "Rp")
+        document.getElementById('display_otr').value = formatRupiahDisplay(mobil ? mobil.otr : 0);
         hitungSimulasi();
     }
 
-    // Mengatur tenor yang dipilih dan bunga otomatis
     function setTenor(tahun) {
         currentTenorTahun = tahun;
-        
-        // Set Bunga Otomatis
-        const bunga = TENOR_CONFIG[tahun] || TENOR_CONFIG[5]; // Ambil bunga dari config, default ke 5 tahun jika tidak ada
+        const bunga = TENOR_CONFIG[tahun] || TENOR_CONFIG[5];
         document.getElementById('input_bunga').value = bunga;
         document.getElementById('bunga_display').textContent = bunga + '%';
         
-        // Update tampilan tombol aktif
         const buttons = document.querySelectorAll('.tenor-options button');
         buttons.forEach(btn => {
             btn.classList.remove('active');
@@ -359,7 +409,6 @@
     }
 
     function changeMode(mode) {
-        // ... (fungsi sama seperti sebelumnya) ...
         currentMode = mode;
         const standardCard = document.getElementById('input-standard-card');
         const reverseCard = document.getElementById('input-reverse-card');
@@ -386,10 +435,10 @@
     }
 
     // ====================================
-    // 5. LOGIKA PERHITUNGAN UTAMA
+    // 4. LOGIKA PERHITUNGAN UTAMA (MODIFIKASI)
     // ====================================
     function hitungSimulasi() {
-        // --- Ambil Data Dasar ---
+        // --- Ambil Data Dasar (Bersihkan Input Rupiah dari titik sebelum dipakai) ---
         const selectedId = parseInt(document.getElementById('mobil_select').value);
         const mobil = DATA_MOBIL.find(m => m.id === selectedId);
         const hargaOtr = mobil ? mobil.otr : 0;
@@ -397,69 +446,58 @@
         const bungaTahunan = parseFloat(document.getElementById('input_bunga').value) || 0;
         const tenorBulan = currentTenorTahun * 12;
         
-        const diskon = parseFloat(document.getElementById('input_diskon').value) || 0;
+        // CLEANING RUPIAH INPUT
+        const diskon = cleanRupiahValue(document.getElementById('input_diskon').value);
+        const biayaProvisi = cleanRupiahValue(document.getElementById('biaya_provisi').value);
+        const biayaAdmin = cleanRupiahValue(document.getElementById('biaya_admin').value);
+        const biayaAsuransi = cleanRupiahValue(document.getElementById('biaya_asuransi').value);
         
-        // Biaya Tambahan Baru
-        const biayaProvisi = parseFloat(document.getElementById('biaya_provisi').value) || 0;
-        const biayaAdmin = parseFloat(document.getElementById('biaya_admin').value) || 0;
-        const biayaAsuransi = parseFloat(document.getElementById('biaya_asuransi').value) || 0;
         const totalBiayaTambahan = biayaProvisi + biayaAdmin + biayaAsuransi;
-        
-        // Angsuran Biaya Tambahan per bulan
         const angsuranBiaya = totalBiayaTambahan / tenorBulan;
 
-        // Harga Bersih
         const hargaBersih = Math.max(0, hargaOtr - diskon);
-        document.getElementById('hasil_harga_bersih').textContent = formatRupiah(hargaBersih);
-        document.getElementById('hasil_biaya_tambahan').textContent = formatRupiah(totalBiayaTambahan);
-        document.getElementById('hasil_angsuran_biaya').textContent = formatRupiah(angsuranBiaya);
+        
+        // Tampilkan Hasil Biaya Tambahan
+        document.getElementById('hasil_harga_bersih').textContent = formatRupiahDisplay(hargaBersih);
+        document.getElementById('hasil_biaya_tambahan').textContent = formatRupiahDisplay(totalBiayaTambahan);
+        document.getElementById('hasil_angsuran_biaya').textContent = formatRupiahDisplay(angsuranBiaya);
 
 
         if (currentMode === 'standard') {
             // --- MODE STANDARD (DP -> Angsuran) ---
-            const dpRequest = parseFloat(document.getElementById('input_dp').value) || 0;
+            const dpRequest = cleanRupiahValue(document.getElementById('input_dp').value);
             
-            // Hitung Pokok Pinjaman
             const pokokPinjaman = Math.max(0, hargaBersih - dpRequest);
-            
-            // Hitung Angsuran Pokok + Bunga
             const angsuranPokokBunga = hitungAngsuranFlat(pokokPinjaman, tenorBulan, bungaTahunan);
-            
-            // Hitung Angsuran Total
             const angsuranTotal = angsuranPokokBunga + angsuranBiaya;
 
             // Tampilkan Hasil
-            document.getElementById('hasil_dp_dibayar').textContent = formatRupiah(dpRequest);
-            document.getElementById('hasil_pokok_pinjaman').textContent = formatRupiah(pokokPinjaman);
-            document.getElementById('hasil_angsuran_pokok_bunga').textContent = formatRupiah(angsuranPokokBunga);
-            document.getElementById('hasil_angsuran_bulanan').textContent = formatRupiah(angsuranTotal);
+            document.getElementById('hasil_dp_dibayar').textContent = formatRupiahDisplay(dpRequest);
+            document.getElementById('hasil_pokok_pinjaman').textContent = formatRupiahDisplay(pokokPinjaman);
+            document.getElementById('hasil_angsuran_pokok_bunga').textContent = formatRupiahDisplay(angsuranPokokBunga);
+            document.getElementById('hasil_angsuran_bulanan').textContent = formatRupiahDisplay(angsuranTotal);
 
         } else { // currentMode === 'reverse'
             // --- MODE REVERSE (Angsuran -> DP) ---
             
-            // Angsuran request harus dikurangi Angsuran Biaya Tambahan untuk mendapatkan Angsuran Pokok+Bunga
-            const angsuranRequestTotal = parseFloat(document.getElementById('request_angsuran').value) || 0;
-            const angsuranRequestPokokBunga = Math.max(0, angsuranRequestTotal - angsuranBiaya);
+            // CLEANING RUPIAH INPUT
+            const angsuranRequestTotal = cleanRupiahValue(document.getElementById('request_angsuran').value);
             
+            const angsuranRequestPokokBunga = Math.max(0, angsuranRequestTotal - angsuranBiaya);
             const targetDpPersen = parseFloat(document.getElementById('reverse_dp_persen').value) || 0;
 
-            // 1. Hitung Pokok Pinjaman Maksimal dari Angsuran Pokok+Bunga Request
             const pokokPinjamanMaks = hitungPokokPinjamanMaks(angsuranRequestPokokBunga, tenorBulan, bungaTahunan);
-
-            // 2. Hitung DP Wajib Dibayar
             const dpWajib = Math.max(0, hargaBersih - pokokPinjamanMaks);
 
-            // 3. Hitung DP Minimal OTR
             const dpMinimalOtr = hargaOtr * (targetDpPersen / 100);
 
-            // 4. Tampilkan Hasil
-            document.getElementById('reverse_angsuran_request').textContent = formatRupiah(angsuranRequestTotal);
+            // Tampilkan Hasil
+            document.getElementById('reverse_angsuran_request').textContent = formatRupiahDisplay(angsuranRequestTotal);
             
-            // DP Final adalah nilai yang tertinggi antara DP Wajib dan DP Minimal OTR
             const dpFinal = Math.max(dpWajib, dpMinimalOtr);
             
-            document.getElementById('reverse_dp_wajib').textContent = formatRupiah(dpFinal);
-            document.getElementById('reverse_dp_minimal_otr').textContent = formatRupiah(dpMinimalOtr);
+            document.getElementById('reverse_dp_wajib').textContent = formatRupiahDisplay(dpFinal);
+            document.getElementById('reverse_dp_minimal_otr').textContent = formatRupiahDisplay(dpMinimalOtr);
             document.getElementById('reverse_dp_persen_output').textContent = targetDpPersen + '%';
         }
     }
