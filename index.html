@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kalkulator DP dan Angsuran Internal Tim</title>
+    <style>
+        /* Gaya dasar (tetap seperti sebelumnya, hanya ditambahkan beberapa detail) */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2 {
+            color: #0056b3;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #fafafa;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input[type="number"] {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-top: 5px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #0056b3;
+            background-color: #e9f7ff;
+            border-radius: 4px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        .tenor-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .tenor-group button {
+            flex: 1;
+            padding: 8px;
+            background-color: #007bff;
+        }
+        .tenor-group button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>💰 Kalkulator DP dan Angsuran Internal Tim</h1>
+
+    <div class="section">
+        <h2>Atur Parameter Umum</h2>
+        <label for="bunga_tahunan">Persentase Bunga Flat Tahunan (%):</label>
+        <input type="number" id="bunga_tahunan" value="12" min="0"> <label for="tenor_bulan">Tenor (Bulan):</label>
+        <input type="number" id="tenor_bulan" value="60" min="1" placeholder="Misalnya 60">
+
+        <div class="tenor-group">
+            <button onclick="document.getElementById('tenor_bulan').value = 36; hitungSemua()">36 Bulan (3 Tahun)</button>
+            <button onclick="document.getElementById('tenor_bulan').value = 48; hitungSemua()">48 Bulan (4 Tahun)</button>
+            <button onclick="document.getElementById('tenor_bulan').value = 60; hitungSemua()">60 Bulan (5 Tahun)</button>
+        </div>
+    </div>
+    
+    <hr>
+
+    <div class="section">
+        <h2>1. Perhitungan DP Paket Standar</h2>
+
+        <label for="harga_paket_standar">Harga Total Paket (Rp):</label>
+        <input type="number" id="harga_paket_standar" value="0" min="0" oninput="hitungDpStandar()">
+
+        <label for="persen_dp_standar">Persentase DP Minimum (%):</label>
+        <input type="number" id="persen_dp_standar" value="10" min="0" max="100" oninput="hitungDpStandar()">
+
+        <div class="result" id="hasil_dp_standar">
+            DP Minimum: Rp 0<br>
+            Iuran Bulanan: Rp 0
+        </div>
+    </div>
+    
+    <hr>
+
+    <div class="section">
+        <h2>2. Perhitungan DP Request Konsumen</h2>
+        
+        <label for="harga_total_request">Harga Total Barang/Layanan (Rp):</label>
+        <input type="number" id="harga_total_request" value="0" min="0">
+
+        <label for="diskon_dealer_request">Diskon Dealer Manual (Rp):</label>
+        <input type="number" id="diskon_dealer_request" value="0" min="0" placeholder="Masukkan angka diskon dalam Rupiah">
+
+        <label for="persen_dp_request">Persentase DP Minimum (%):</label>
+        <input type="number" id="persen_dp_request" value="10" min="0" max="100">
+
+        <button onclick="hitungDpRequest()">Hitung DP Request & Angsuran</button>
+
+        <div class="result" id="hasil_dp_request">
+            Harga Setelah Diskon: Rp 0<br>
+            DP Minimum: Rp 0<br>
+            Iuran Bulanan: Rp 0
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * FUNGSI UNTUK FORMAT RUPIAH
+     */
+    const formatRupiah = (angka) => {
+        const number_string = Math.round(angka).toString();
+        const sisa = number_string.length % 3;
+        let rupiah = number_string.substr(0, sisa);
+        const ribuan = number_string.substr(sisa).match(/\d{3}/g);
+
+        if (ribuan) {
+            const separator = sisa ? '.' : '';
+            rupiah += separator + ribuan.join('.');
+        }
+        return rupiah;
+    };
+
+    /**
+     * FUNGSI UTAMA UNTUK MENGHITUNG ANGSURAN (FLAT RATE)
+     * Rumus: Angsuran = (Pokok Pinjaman + Total Bunga) / Tenor
+     */
+    function hitungAngsuran(pokok_pinjaman, tenor_bulan, bunga_tahunan_persen) {
+        if (tenor_bulan <= 0 || bunga_tahunan_persen < 0) return 0;
+
+        const bunga_per_bulan = (bunga_tahunan_persen / 100) / 12;
+        const total_bunga = pokok_pinjaman * bunga_per_bulan * tenor_bulan;
+        
+        const total_tagihan = pokok_pinjaman + total_bunga;
+        const angsuran_bulanan = total_tagihan / tenor_bulan;
+
+        return angsuran_bulanan;
+    }
+
+    // Fungsi pembantu untuk memanggil kedua perhitungan
+    function hitungSemua() {
+        hitungDpStandar();
+        hitungDpRequest();
+    }
+
+
+    // --- BAGIAN 1: DP PAKET STANDAR ---
+    function hitungDpStandar() {
+        const harga = parseFloat(document.getElementById('harga_paket_standar').value) || 0;
+        const persen_dp = parseFloat(document.getElementById('persen_dp_standar').value) || 0;
+        
+        // Parameter Angsuran
+        const bunga = parseFloat(document.getElementById('bunga_tahunan').value) || 0;
+        const tenor = parseFloat(document.getElementById('tenor_bulan').value) || 0;
+        
+        // 1. Hitung DP
+        let dp_minimum = 0;
+        if (harga > 0 && persen_dp > 0) {
+            dp_minimum = harga * (persen_dp / 100);
+        }
+
+        // 2. Hitung Pokok Pinjaman
+        const pokok_pinjaman = harga - dp_minimum;
+
+        // 3. Hitung Angsuran Bulanan
+        const iuran_bulanan = hitungAngsuran(pokok_pinjaman, tenor, bunga);
+
+        document.getElementById('hasil_dp_standar').innerHTML = 
+            `DP Minimum: **Rp ${formatRupiah(dp_minimum)}**<br>` +
+            `Pokok Pinjaman: **Rp ${formatRupiah(pokok_pinjaman)}**<br>` +
+            `Iuran Bulanan (${tenor} Bulan, ${bunga}% Bunga/Tahun): **Rp ${formatRupiah(iuran_bulanan)}**`;
+    }
+
+    // --- BAGIAN 2: DP REQUEST KONSUMEN ---
+    function hitungDpRequest() {
+        const harga_total = parseFloat(document.getElementById('harga_total_request').value) || 0;
+        const diskon_dealer = parseFloat(document.getElementById('diskon_dealer_request').value) || 0;
+        const persen_dp = parseFloat(document.getElementById('persen_dp_request').value) || 0;
+        
+        // Parameter Angsuran
+        const bunga = parseFloat(document.getElementById('bunga_tahunan').value) || 0;
+        const tenor = parseFloat(document.getElementById('tenor_bulan').value) || 0;
+        
+        // 1. Hitung Harga Setelah Diskon
+        const harga_setelah_diskon = harga_total - diskon_dealer;
+        const harga_final = Math.max(0, harga_setelah_diskon);
+
+        // 2. Hitung DP Minimum
+        let dp_minimum = 0;
+        if (harga_final > 0 && persen_dp > 0) {
+            dp_minimum = harga_final * (persen_dp / 100);
+        }
+
+        // 3. Hitung Pokok Pinjaman
+        const pokok_pinjaman = harga_final - dp_minimum;
+
+        // 4. Hitung Angsuran Bulanan
+        const iuran_bulanan = hitungAngsuran(pokok_pinjaman, tenor, bunga);
+
+
+        document.getElementById('hasil_dp_request').innerHTML = 
+            `Harga Setelah Diskon: **Rp ${formatRupiah(harga_final)}**<br>` +
+            `DP Minimum: **Rp ${formatRupiah(dp_minimum)}**<br>` +
+            `Pokok Pinjaman: **Rp ${formatRupiah(pokok_pinjaman)}**<br>` +
+            `Iuran Bulanan (${tenor} Bulan, ${bunga}% Bunga/Tahun): **Rp ${formatRupiah(iuran_bulanan)}**`;
+    }
+
+    // Panggil fungsi hitungSemua saat halaman dimuat
+    window.onload = hitungSemua;
+</script>
+
+</body>
+</html>
