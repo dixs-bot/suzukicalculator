@@ -3,247 +3,418 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kalkulator DP dan Angsuran Internal Tim</title>
+    <title>Simulasi Angsuran Mobil Responsive</title>
     <style>
-        /* Gaya dasar (tetap seperti sebelumnya, hanya ditambahkan beberapa detail) */
+        /* ==================================== */
+        /* CSS UNTUK RESPONSIVITAS & TAMPILAN */
+        /* ==================================== */
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #28a745;
+            --background-color: #f8f9fa;
+            --card-background: #ffffff;
+            --shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f4f4f4;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
             color: #333;
         }
+
         .container {
-            max-width: 800px;
-            margin: auto;
-            background: #fff;
+            max-width: 900px;
+            margin: 0 auto;
             padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
-        h1, h2 {
-            color: #0056b3;
-            border-bottom: 2px solid #eee;
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 3px solid var(--primary-color);
             padding-bottom: 10px;
         }
-        .section {
-            margin-bottom: 30px;
-            padding: 15px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            background-color: #fafafa;
+
+        .card {
+            background: var(--card-background);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border-top: 5px solid var(--secondary-color);
         }
+
+        /* Form Controls */
         label {
             display: block;
-            margin-top: 10px;
-            font-weight: bold;
+            margin-top: 15px;
+            margin-bottom: 5px;
+            font-weight: 600;
         }
-        input[type="number"] {
-            width: calc(100% - 22px);
-            padding: 10px;
-            margin-top: 5px;
-            margin-bottom: 15px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-        button {
-            background-color: #28a745;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+
+        select, input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ced4da;
+            border-radius: 8px;
+            box-sizing: border-box;
             font-size: 16px;
-            margin-top: 10px;
         }
-        button:hover {
-            background-color: #218838;
-        }
-        .result {
-            margin-top: 20px;
-            padding: 15px;
-            border: 2px solid #0056b3;
-            background-color: #e9f7ff;
-            border-radius: 4px;
-            font-size: 1.1em;
-            font-weight: bold;
-        }
-        .tenor-group {
+        
+        /* Tenor Buttons */
+        .tenor-options {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            flex-wrap: wrap; /* Penting untuk responsif */
+            margin-top: 10px;
         }
-        .tenor-group button {
-            flex: 1;
-            padding: 8px;
-            background-color: #007bff;
+
+        .tenor-options button {
+            flex-grow: 1; /* Agar tombol mengisi ruang yang tersedia */
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background-color: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+            transition: background-color 0.3s;
         }
-        .tenor-group button:hover {
-            background-color: #0056b3;
+
+        .tenor-options button.active, .tenor-options button:hover {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        /* Hasil Perhitungan */
+        .result {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #e2f0ff;
+            border: 1px solid var(--primary-color);
+            border-radius: 8px;
+        }
+
+        .result h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+        }
+
+        .result p {
+            font-size: 1.1em;
+            margin: 5px 0;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: var(--secondary-color);
+            font-size: 1.2em;
+        }
+
+        /* Mode Toggle */
+        .mode-toggle {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .mode-toggle button {
+            padding: 10px 15px;
+            border: 1px solid var(--primary-color);
+            background: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .mode-toggle button.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .mode-toggle button:first-child { border-radius: 8px 0 0 8px; }
+        .mode-toggle button:last-child { border-radius: 0 8px 8px 0; }
+        
+        /* Utility */
+        .hidden { display: none; }
+        
+        /* Media Query untuk Mobile */
+        @media (max-width: 600px) {
+            .container {
+                padding: 10px;
+            }
+            h1 {
+                font-size: 1.5em;
+            }
+            .tenor-options {
+                gap: 5px;
+            }
+            .tenor-options button {
+                padding: 8px;
+                font-size: 0.9em;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>💰 Kalkulator DP dan Angsuran Internal Tim</h1>
+    <h1>🚘 Simulasi Angsuran Mobil</h1>
 
-    <div class="section">
-        <h2>Atur Parameter Umum</h2>
-        <label for="bunga_tahunan">Persentase Bunga Flat Tahunan (%):</label>
-        <input type="number" id="bunga_tahunan" value="12" min="0"> <label for="tenor_bulan">Tenor (Bulan):</label>
-        <input type="number" id="tenor_bulan" value="60" min="1" placeholder="Misalnya 60">
-
-        <div class="tenor-group">
-            <button onclick="document.getElementById('tenor_bulan').value = 36; hitungSemua()">36 Bulan (3 Tahun)</button>
-            <button onclick="document.getElementById('tenor_bulan').value = 48; hitungSemua()">48 Bulan (4 Tahun)</button>
-            <button onclick="document.getElementById('tenor_bulan').value = 60; hitungSemua()">60 Bulan (5 Tahun)</button>
-        </div>
+    <div class="mode-toggle">
+        <button id="btn-mode-standard" class="active" onclick="changeMode('standard')">Mode Angsuran DP</button>
+        <button id="btn-mode-reverse" onclick="changeMode('reverse')">Mode Request Angsuran</button>
     </div>
-    
-    <hr>
 
-    <div class="section">
-        <h2>1. Perhitungan DP Paket Standar</h2>
+    <div class="card">
+        <h2>Detail Mobil & Tenor</h2>
+        <label for="mobil_select">Pilih Mobil:</label>
+        <select id="mobil_select" onchange="updateOtrDisplay()">
+            </select>
 
-        <label for="harga_paket_standar">Harga Total Paket (Rp):</label>
-        <input type="number" id="harga_paket_standar" value="0" min="0" oninput="hitungDpStandar()">
-
-        <label for="persen_dp_standar">Persentase DP Minimum (%):</label>
-        <input type="number" id="persen_dp_standar" value="10" min="0" max="100" oninput="hitungDpStandar()">
-
-        <div class="result" id="hasil_dp_standar">
-            DP Minimum: Rp 0<br>
-            Iuran Bulanan: Rp 0
-        </div>
-    </div>
-    
-    <hr>
-
-    <div class="section">
-        <h2>2. Perhitungan DP Request Konsumen</h2>
+        <label for="display_otr">Harga OTR (Rp):</label>
+        <input type="text" id="display_otr" value="0" readonly>
         
-        <label for="harga_total_request">Harga Total Barang/Layanan (Rp):</label>
-        <input type="number" id="harga_total_request" value="0" min="0">
+        <label for="input_bunga">Bunga Flat Tahunan (%):</label>
+        <input type="number" id="input_bunga" value="7.5" min="0.1" oninput="hitungSimulasi()">
 
-        <label for="diskon_dealer_request">Diskon Dealer Manual (Rp):</label>
-        <input type="number" id="diskon_dealer_request" value="0" min="0" placeholder="Masukkan angka diskon dalam Rupiah">
+        <label>Pilih Tenor (Tahun):</label>
+        <div class="tenor-options" id="tenor_options">
+            <button onclick="setTenor(1)">1 Tahun</button>
+            <button onclick="setTenor(2)">2 Tahun</button>
+            <button onclick="setTenor(3)">3 Tahun</button>
+            <button onclick="setTenor(4)">4 Tahun</button>
+            <button class="active" onclick="setTenor(5)">5 Tahun</button>
+        </div>
+    </div>
+    
+    <div class="card" id="input-standard-card">
+        <h2>Input DP & Diskon</h2>
+        
+        <label for="input_dp">DP Request Konsumen (Rp):</label>
+        <input type="number" id="input_dp" value="0" min="0" oninput="hitungSimulasi()">
 
-        <label for="persen_dp_request">Persentase DP Minimum (%):</label>
-        <input type="number" id="persen_dp_request" value="10" min="0" max="100">
+        <label for="input_diskon">Diskon Dealer Manual (Rp):</label>
+        <input type="number" id="input_diskon" value="0" min="0" oninput="hitungSimulasi()">
+    </div>
 
-        <button onclick="hitungDpRequest()">Hitung DP Request & Angsuran</button>
+    <div class="card hidden" id="input-reverse-card">
+        <h2>Input Angsuran Request</h2>
+        
+        <label for="request_angsuran">Kesanggupan Angsuran Bulanan (Rp):</label>
+        <input type="number" id="request_angsuran" value="4000000" min="100000" oninput="hitungSimulasi()">
 
-        <div class="result" id="hasil_dp_request">
-            Harga Setelah Diskon: Rp 0<br>
-            DP Minimum: Rp 0<br>
-            Iuran Bulanan: Rp 0
+        <label for="reverse_dp_persen">Target DP Minimal (Persen OTR):</label>
+        <input type="number" id="reverse_dp_persen" value="20" min="0" max="100" placeholder="Minimal DP 20%" oninput="hitungSimulasi()">
+    </div>
+
+
+    <div class="card result">
+        <h3>Hasil Simulasi</h3>
+        <p>Harga Bersih (OTR - Diskon): <span id="hasil_harga_bersih" class="highlight">Rp 0</span></p>
+        <hr>
+        
+        <div id="result-standard-output">
+            <p>DP Dibayarkan: <span id="hasil_dp_dibayar" class="highlight">Rp 0</span></p>
+            <p>Pokok Pinjaman: <span id="hasil_pokok_pinjaman" class="highlight">Rp 0</span></p>
+            <p>Angsuran Bulanan: <span id="hasil_angsuran_bulanan" class="highlight">Rp 0</span></p>
+        </div>
+        
+        <div id="result-reverse-output" class="hidden">
+            <p>Angsuran Request Bulanan: <span id="reverse_angsuran_request" class="highlight">Rp 0</span></p>
+            <p>Total DP Wajib Dibayar: <span id="reverse_dp_wajib" class="highlight">Rp 0</span></p>
+            <p>DP Minimum OTR (<span id="reverse_dp_persen_output">20%</span>): <span id="reverse_dp_minimal_otr" class="highlight">Rp 0</span></p>
         </div>
     </div>
 </div>
 
 <script>
-    /**
-     * FUNGSI UNTUK FORMAT RUPIAH
-     */
-    const formatRupiah = (angka) => {
-        const number_string = Math.round(angka).toString();
-        const sisa = number_string.length % 3;
-        let rupiah = number_string.substr(0, sisa);
-        const ribuan = number_string.substr(sisa).match(/\d{3}/g);
+    // ====================================
+    // 1. DATA MOBIL (MUDAH DI EDIT)
+    // ====================================
+    const DATA_MOBIL = [
+        { id: 1, nama: "Suzuki XL7 Tipe Zeta", otr: 350000000 },
+        { id: 2, nama: "Toyota Avanza 1.5 G", otr: 280000000 },
+        { id: 3, nama: "Honda Brio RS", otr: 250000000 },
+        { id: 4, nama: "Mitsubishi Xpander Ultimate", otr: 320000000 },
+        { id: 5, nama: "Pilih Mobil Lain...", otr: 0 }, // Opsi default / mobil tanpa harga
+    ];
 
-        if (ribuan) {
-            const separator = sisa ? '.' : '';
-            rupiah += separator + ribuan.join('.');
-        }
-        return rupiah;
+    // ====================================
+    // 2. FUNGSI UTILITY
+    // ====================================
+    const formatRupiah = (angka) => {
+        const num = Math.round(angka);
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(num);
     };
 
     /**
-     * FUNGSI UTAMA UNTUK MENGHITUNG ANGSURAN (FLAT RATE)
-     * Rumus: Angsuran = (Pokok Pinjaman + Total Bunga) / Tenor
+     * Hitung Angsuran Flat Rate Bulanan
+     * @param {number} pokokPinjaman
+     * @param {number} tenorBulan
+     * @param {number} bungaTahunanPersen
+     * @returns {number} Angsuran Bulanan
      */
-    function hitungAngsuran(pokok_pinjaman, tenor_bulan, bunga_tahunan_persen) {
-        if (tenor_bulan <= 0 || bunga_tahunan_persen < 0) return 0;
+    const hitungAngsuranFlat = (pokokPinjaman, tenorBulan, bungaTahunanPersen) => {
+        if (tenorBulan <= 0) return 0;
+        const bungaTahunan = bungaTahunanPersen / 100;
+        const totalBunga = pokokPinjaman * bungaTahunan * (tenorBulan / 12);
+        const totalTagihan = pokokPinjaman + totalBunga;
+        return totalTagihan / tenorBulan;
+    };
 
-        const bunga_per_bulan = (bunga_tahunan_persen / 100) / 12;
-        const total_bunga = pokok_pinjaman * bunga_per_bulan * tenor_bulan;
-        
-        const total_tagihan = pokok_pinjaman + total_bunga;
-        const angsuran_bulanan = total_tagihan / tenor_bulan;
+    // ====================================
+    // 3. FUNGSI INI DIJALANKAN SAAT START
+    // ====================================
+    let currentTenorTahun = 5;
+    let currentMode = 'standard';
 
-        return angsuran_bulanan;
+    document.addEventListener('DOMContentLoaded', () => {
+        populateMobilOptions();
+        setTenor(currentTenorTahun); // Inisialisasi tenor
+        changeMode(currentMode); // Inisialisasi mode
+        hitungSimulasi(); // Hitung pertama kali
+    });
+
+    // Mengisi dropdown pilihan mobil
+    function populateMobilOptions() {
+        const select = document.getElementById('mobil_select');
+        DATA_MOBIL.forEach(mobil => {
+            const option = document.createElement('option');
+            option.value = mobil.id;
+            option.textContent = `${mobil.nama} (OTR: ${formatRupiah(mobil.otr)})`;
+            select.appendChild(option);
+        });
+        select.value = DATA_MOBIL[0].id; // Set default ke mobil pertama
+        updateOtrDisplay();
     }
 
-    // Fungsi pembantu untuk memanggil kedua perhitungan
-    function hitungSemua() {
-        hitungDpStandar();
-        hitungDpRequest();
+    // Mengupdate display OTR saat mobil dipilih
+    function updateOtrDisplay() {
+        const selectedId = parseInt(document.getElementById('mobil_select').value);
+        const mobil = DATA_MOBIL.find(m => m.id === selectedId);
+        document.getElementById('display_otr').value = formatRupiah(mobil ? mobil.otr : 0);
+        hitungSimulasi();
     }
 
+    // Mengatur tenor yang dipilih
+    function setTenor(tahun) {
+        currentTenorTahun = tahun;
+        
+        // Update tampilan tombol aktif
+        const buttons = document.querySelectorAll('.tenor-options button');
+        buttons.forEach(btn => {
+            btn.classList.remove('active');
+            if (btn.textContent.includes(`${tahun} Tahun`)) {
+                btn.classList.add('active');
+            }
+        });
 
-    // --- BAGIAN 1: DP PAKET STANDAR ---
-    function hitungDpStandar() {
-        const harga = parseFloat(document.getElementById('harga_paket_standar').value) || 0;
-        const persen_dp = parseFloat(document.getElementById('persen_dp_standar').value) || 0;
+        hitungSimulasi();
+    }
+
+    // Mengubah mode perhitungan
+    function changeMode(mode) {
+        currentMode = mode;
+        const standardCard = document.getElementById('input-standard-card');
+        const reverseCard = document.getElementById('input-reverse-card');
+        const standardOutput = document.getElementById('result-standard-output');
+        const reverseOutput = document.getElementById('result-reverse-output');
         
-        // Parameter Angsuran
-        const bunga = parseFloat(document.getElementById('bunga_tahunan').value) || 0;
-        const tenor = parseFloat(document.getElementById('tenor_bulan').value) || 0;
-        
-        // 1. Hitung DP
-        let dp_minimum = 0;
-        if (harga > 0 && persen_dp > 0) {
-            dp_minimum = harga * (persen_dp / 100);
+        document.getElementById('btn-mode-standard').classList.remove('active');
+        document.getElementById('btn-mode-reverse').classList.remove('active');
+
+        if (mode === 'standard') {
+            standardCard.classList.remove('hidden');
+            reverseCard.classList.add('hidden');
+            standardOutput.classList.remove('hidden');
+            reverseOutput.classList.add('hidden');
+            document.getElementById('btn-mode-standard').classList.add('active');
+        } else { // reverse mode
+            standardCard.classList.add('hidden');
+            reverseCard.classList.remove('hidden');
+            standardOutput.classList.add('hidden');
+            reverseOutput.classList.remove('hidden');
+            document.getElementById('btn-mode-reverse').classList.add('active');
         }
-
-        // 2. Hitung Pokok Pinjaman
-        const pokok_pinjaman = harga - dp_minimum;
-
-        // 3. Hitung Angsuran Bulanan
-        const iuran_bulanan = hitungAngsuran(pokok_pinjaman, tenor, bunga);
-
-        document.getElementById('hasil_dp_standar').innerHTML = 
-            `DP Minimum: **Rp ${formatRupiah(dp_minimum)}**<br>` +
-            `Pokok Pinjaman: **Rp ${formatRupiah(pokok_pinjaman)}**<br>` +
-            `Iuran Bulanan (${tenor} Bulan, ${bunga}% Bunga/Tahun): **Rp ${formatRupiah(iuran_bulanan)}**`;
+        hitungSimulasi();
     }
 
-    // --- BAGIAN 2: DP REQUEST KONSUMEN ---
-    function hitungDpRequest() {
-        const harga_total = parseFloat(document.getElementById('harga_total_request').value) || 0;
-        const diskon_dealer = parseFloat(document.getElementById('diskon_dealer_request').value) || 0;
-        const persen_dp = parseFloat(document.getElementById('persen_dp_request').value) || 0;
+    // ====================================
+    // 4. LOGIKA PERHITUNGAN UTAMA
+    // ====================================
+    function hitungSimulasi() {
+        // --- Ambil Data Dasar ---
+        const selectedId = parseInt(document.getElementById('mobil_select').value);
+        const mobil = DATA_MOBIL.find(m => m.id === selectedId);
+        const hargaOtr = mobil ? mobil.otr : 0;
+        const bungaTahunan = parseFloat(document.getElementById('input_bunga').value) || 0;
+        const tenorBulan = currentTenorTahun * 12;
         
-        // Parameter Angsuran
-        const bunga = parseFloat(document.getElementById('bunga_tahunan').value) || 0;
-        const tenor = parseFloat(document.getElementById('tenor_bulan').value) || 0;
+        const diskon = parseFloat(document.getElementById('input_diskon').value) || 0;
         
-        // 1. Hitung Harga Setelah Diskon
-        const harga_setelah_diskon = harga_total - diskon_dealer;
-        const harga_final = Math.max(0, harga_setelah_diskon);
+        // Harga Bersih
+        const hargaBersih = Math.max(0, hargaOtr - diskon);
+        document.getElementById('hasil_harga_bersih').textContent = formatRupiah(hargaBersih);
 
-        // 2. Hitung DP Minimum
-        let dp_minimum = 0;
-        if (harga_final > 0 && persen_dp > 0) {
-            dp_minimum = harga_final * (persen_dp / 100);
+        if (currentMode === 'standard') {
+            // --- MODE STANDARD (DP -> Angsuran) ---
+            const dpRequest = parseFloat(document.getElementById('input_dp').value) || 0;
+            
+            // Hitung Pokok Pinjaman
+            const pokokPinjaman = Math.max(0, hargaBersih - dpRequest);
+            
+            // Hitung Angsuran
+            const angsuranBulanan = hitungAngsuranFlat(pokokPinjaman, tenorBulan, bungaTahunan);
+
+            // Tampilkan Hasil
+            document.getElementById('hasil_dp_dibayar').textContent = formatRupiah(dpRequest);
+            document.getElementById('hasil_pokok_pinjaman').textContent = formatRupiah(pokokPinjaman);
+            document.getElementById('hasil_angsuran_bulanan').textContent = formatRupiah(angsuranBulanan);
+
+        } else { // currentMode === 'reverse'
+            // --- MODE REVERSE (Angsuran -> DP) ---
+            const angsuranRequest = parseFloat(document.getElementById('request_angsuran').value) || 0;
+            const targetDpPersen = parseFloat(document.getElementById('reverse_dp_persen').value) || 0;
+
+            // 1. Hitung Pokok Pinjaman Maksimal dari Angsuran Request
+            const B = bungaTahunan / 100;
+            const T = tenorBulan;
+            
+            // Rumus Pokok Pinjaman (P) dari Angsuran (A) Flat Rate:
+            // A = (P + P * B * (T/12)) / T
+            // A * T = P (1 + B * (T/12))
+            // P = (A * T) / (1 + B * (T/12))
+            
+            let pokokPinjamanMaks = 0;
+            if (angsuranRequest > 0) {
+                pokokPinjamanMaks = (angsuranRequest * T) / (1 + (B * (T / 12)));
+            }
+
+            // 2. Hitung DP Wajib Dibayar
+            const dpWajib = Math.max(0, hargaBersih - pokokPinjamanMaks);
+
+            // 3. Hitung DP Minimal OTR
+            const dpMinimalOtr = hargaOtr * (targetDpPersen / 100);
+
+            // 4. Tampilkan Hasil
+            document.getElementById('reverse_angsuran_request').textContent = formatRupiah(angsuranRequest);
+            
+            // Tampilkan DP Wajib: Jika DP Wajib > 0, gunakan nilai tersebut, jika tidak gunakan DP Minimal OTR
+            const dpFinal = Math.max(dpWajib, dpMinimalOtr);
+            
+            document.getElementById('reverse_dp_wajib').textContent = formatRupiah(dpFinal);
+            document.getElementById('reverse_dp_minimal_otr').textContent = formatRupiah(dpMinimalOtr);
+            document.getElementById('reverse_dp_persen_output').textContent = targetDpPersen + '%';
         }
-
-        // 3. Hitung Pokok Pinjaman
-        const pokok_pinjaman = harga_final - dp_minimum;
-
-        // 4. Hitung Angsuran Bulanan
-        const iuran_bulanan = hitungAngsuran(pokok_pinjaman, tenor, bunga);
-
-
-        document.getElementById('hasil_dp_request').innerHTML = 
-            `Harga Setelah Diskon: **Rp ${formatRupiah(harga_final)}**<br>` +
-            `DP Minimum: **Rp ${formatRupiah(dp_minimum)}**<br>` +
-            `Pokok Pinjaman: **Rp ${formatRupiah(pokok_pinjaman)}**<br>` +
-            `Iuran Bulanan (${tenor} Bulan, ${bunga}% Bunga/Tahun): **Rp ${formatRupiah(iuran_bulanan)}**`;
     }
-
-    // Panggil fungsi hitungSemua saat halaman dimuat
-    window.onload = hitungSemua;
 </script>
 
 </body>
